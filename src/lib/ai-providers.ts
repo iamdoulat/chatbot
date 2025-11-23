@@ -35,7 +35,7 @@ class GeminiProvider implements AIProvider {
     async generateResponse(messages: ChatMessage[]): Promise<string> {
         if (!this.apiKey) throw new Error("Gemini API Key missing");
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${this.apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`;
 
         // Convert messages to Gemini format
         const contents = messages.map(m => ({
@@ -87,6 +87,7 @@ class OpenAIProvider implements AIProvider {
 
         if (!response.ok) {
             const error = await response.text();
+            console.error("OpenAI Error Response:", error);
             throw new Error(`OpenAI API Error: ${error}`);
         }
 
