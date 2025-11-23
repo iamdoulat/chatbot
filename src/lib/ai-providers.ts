@@ -1,6 +1,5 @@
-// We might need to install this or use REST
-// For now, we will use a generic REST approach or mock to avoid too many dependencies without checking.
-// Actually, let's define a clean interface.
+import { ChatMessage, AIProvider } from './ai-providers'; // Self-referencing for types if needed, but better to keep types in separate file or top of file. 
+// Let's keep it simple and overwrite the whole file to be clean.
 
 export interface ChatMessage {
     role: 'user' | 'assistant' | 'system';
@@ -37,7 +36,6 @@ class GeminiProvider implements AIProvider {
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`;
 
-        // Convert messages to Gemini format
         const contents = messages.map(m => ({
             role: m.role === 'user' ? 'user' : 'model',
             parts: [{ text: m.content }]
@@ -108,7 +106,6 @@ class AnthropicProvider implements AIProvider {
     async generateResponse(messages: ChatMessage[]): Promise<string> {
         if (!this.apiKey) throw new Error("Anthropic API Key missing");
 
-        // Anthropic requires system messages to be separate
         const systemMessage = messages.find(m => m.role === 'system');
         const chatMessages = messages.filter(m => m.role !== 'system');
 
@@ -137,12 +134,47 @@ class AnthropicProvider implements AIProvider {
     }
 }
 
+class OpenRouterProvider implements AIProvider {
+    id = 'openrouter';
+    name = 'OpenRouter';
+    private apiKey: string;
+
+    constructor(apiKey: string) {
+        this.apiKey = apiKey;
+    }
+
+    async generateResponse(messages: ChatMessage[]): Promise<string> {
+        if (!this.apiKey) throw new Error("OpenRouter API Key missing");
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${this.apiKey}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "model": "openai/gpt-3.5-turbo", // Default model, can be made configurable
+                "messages": messages.map(m => ({ role: m.role, content: m.content })),
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(`OpenRouter API Error: ${error}`);
+        }
+
+        const data = await response.json();
+        return data.choices[0].message.content;
+    }
+}
+
 // Factory to get provider
-export function getProvider(providerId: string): AIProvider {
-    const geminiKey = process.env.GEMINI_API_KEY;
-    const openaiKey = process.env.OPENAI_API_KEY;
-    const anthropicKey = process.env.ANTHROPIC_API_KEY;
-    // Add others as needed
+// Now accepts optional keys override
+export function getProvider(providerId: string, keys?: { gemini?: string; openai?: string; anthropic?: string; openrouter?: string }): AIProvider {
+    const geminiKey = keys?.gemini || process.env.GEMINI_API_KEY;
+    const openaiKey = keys?.openai || process.env.OPENAI_API_KEY;
+    const anthropicKey = keys?.anthropic || process.env.ANTHROPIC_API_KEY;
+    const openrouterKey = keys?.openrouter || process.env.OPENROUTER_API_KEY;
 
     switch (providerId) {
         case 'gemini':
@@ -151,11 +183,11 @@ export function getProvider(providerId: string): AIProvider {
             return openaiKey ? new OpenAIProvider(openaiKey, 'gpt-4') : new MockProvider();
         case 'claude-3':
             return anthropicKey ? new AnthropicProvider(anthropicKey) : new MockProvider();
+        case 'openrouter':
+            return openrouterKey ? new OpenRouterProvider(openrouterKey) : new MockProvider();
         case 'grok':
         case 'deepseek':
         case 'mistral':
-            // Placeholder for other providers, falling back to Mock for now
-            // In a real app, we'd implement their specific API calls here
             return new MockProvider();
         default:
             return new MockProvider();

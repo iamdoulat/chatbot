@@ -6,18 +6,20 @@ interface SidebarProps {
   selectedModel: string;
   onSelectModel: (model: string) => void;
   onNewChat: () => void;
+  onOpenSettings: () => void;
 }
 
 const models = [
   { id: 'gemini', name: 'Gemini', icon: Bot },
   { id: 'gpt-4', name: 'GPT-4', icon: MessageSquare },
   { id: 'claude-3', name: 'Claude 3', icon: MessageSquare },
+  { id: 'openrouter', name: 'OpenRouter', icon: MessageSquare },
   { id: 'grok', name: 'Grok', icon: MessageSquare },
   { id: 'deepseek', name: 'DeepSeek', icon: MessageSquare },
   { id: 'mistral', name: 'Mistral', icon: MessageSquare },
 ];
 
-export function Sidebar({ selectedModel, onSelectModel, onNewChat }: SidebarProps) {
+export function Sidebar({ selectedModel, onSelectModel, onNewChat, onOpenSettings }: SidebarProps) {
   return (
     <div className="w-64 bg-gray-900 text-white flex flex-col h-full border-r border-gray-800">
       <div className="p-4">
@@ -56,7 +58,10 @@ export function Sidebar({ selectedModel, onSelectModel, onNewChat }: SidebarProp
       </div>
 
       <div className="p-4 border-t border-gray-800">
-        <button className="w-full flex items-center gap-3 text-gray-400 hover:text-white transition-colors px-2 py-2">
+        <button
+          onClick={onOpenSettings}
+          className="w-full flex items-center gap-3 text-gray-400 hover:text-white transition-colors px-2 py-2"
+        >
           <Settings size={20} />
           <span className="text-sm">Settings</span>
         </button>

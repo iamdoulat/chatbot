@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Paperclip, Mic } from 'lucide-react';
 import { MessageBubble } from './MessageBubble';
+import { useSettings } from '@/lib/settings-context';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -12,6 +13,7 @@ interface ChatAreaProps {
 }
 
 export function ChatArea({ selectedModel }: ChatAreaProps) {
+    const { settings } = useSettings();
     const [messages, setMessages] = useState<Message[]>([
         { role: 'assistant', content: `Hello! I'm ready to help you using **${selectedModel}**. How can I assist you today?` }
     ]);
@@ -32,7 +34,6 @@ export function ChatArea({ selectedModel }: ChatAreaProps) {
         if (messages.length === 1 && messages[0].role === 'assistant') {
             setMessages([{ role: 'assistant', content: `Hello! I'm ready to help you using **${selectedModel}**. How can I assist you today?` }]);
         }
-        // We intentionally omit 'messages' from dependencies to avoid resetting if the user has started chatting
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedModel]);
 
@@ -48,7 +49,13 @@ export function ChatArea({ selectedModel }: ChatAreaProps) {
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-gemini-key': settings.apiKeys.gemini || '',
+                    'x-openai-key': settings.apiKeys.openai || '',
+                    'x-anthropic-key': settings.apiKeys.anthropic || '',
+                    'x-openrouter-key': settings.apiKeys.openrouter || ''
+                },
                 body: JSON.stringify({
                     messages: [...messages, userMessage],
                     model: selectedModel
