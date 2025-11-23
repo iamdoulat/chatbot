@@ -1,5 +1,4 @@
-import { ChatMessage, AIProvider } from './ai-providers'; // Self-referencing for types if needed, but better to keep types in separate file or top of file. 
-// Let's keep it simple and overwrite the whole file to be clean.
+// Types defined locally for simplicity
 
 export interface ChatMessage {
     role: 'user' | 'assistant' | 'system';
